@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Word Cards (React)</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Patrick+Hand&family=Nunito:wght@400;700&display=swap">
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+  --desk:#2b3e5c;--card:#fffefb;--rule:#cfe0ee;--red:#d9534f;--ink:#26303b;--soft:#6b7783;--ok:#2f8f5b;--hand:"Patrick Hand","Comic Sans MS",cursive;--sans:"Nunito",system-ui,sans-serif}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--desk:#141c2a;--card:#e9e8e2;--rule:#b9c8d4;--ink:#1f2730;--soft:#5a6672}}
+:root[data-theme="dark"]{--desk:#141c2a;--card:#e9e8e2;--rule:#b9c8d4;--ink:#1f2730;--soft:#5a6672}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*,*:before,*:after{box-sizing:inherit}
+body{margin:0;background:var(--desk);font:16px/1.5 var(--sans);color:var(--ink);padding:18px 14px 60px}
+.app{max-width:520px;margin:0 auto}
+.top{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:14px;flex-wrap:wrap}
+h1{font:400 30px/1 var(--hand);color:#fff;margin:0}
+nav{display:flex;gap:4px;background:rgba(255,255,255,.12);padding:4px;border-radius:99px}
+nav a{color:#dbe5f2;text-decoration:none;padding:6px 14px;border-radius:99px;font-weight:700;font-size:14px}
+nav a[aria-current="page"]{background:#fff;color:#26303b}
+a:focus-visible,button:focus-visible,input:focus-visible,textarea:focus-visible,.flip:focus-visible{outline:3px solid #ffd166;outline-offset:2px}
+.card{background:var(--card);border-radius:6px;box-shadow:0 8px 0 rgba(0,0,0,.22);padding:52px 22px 22px;
+  background-image:linear-gradient(var(--red) 0 2px,transparent 2px),repeating-linear-gradient(transparent 0 33px,var(--rule) 33px 34px);
+  background-size:100% 40px,100% 100%;background-repeat:no-repeat,repeat;background-position:0 38px,0 44px}
+.card h2{font:400 26px/1 var(--hand);margin:-30px 0 26px}
+label{display:block;font:400 18px var(--hand);color:var(--soft);margin-top:10px}
+input,textarea{width:100%;font:inherit;padding:8px 10px;border:1.5px solid var(--rule);background:rgba(255,255,255,.85);color:#26303b;border-radius:4px}
+textarea{min-height:64px;resize:vertical}
+button{font:700 15px var(--sans);padding:10px 16px;border:0;border-radius:6px;background:var(--ink);color:#fff;cursor:pointer}
+button.ok{background:var(--ok)}button.no{background:var(--red)}
+button.white{background:#fff;color:#26303b}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;align-items:center}
+.msg{color:var(--ok);font-weight:700}
+.stats{display:flex;justify-content:space-between;color:#dbe5f2;font-size:14px;margin-bottom:8px}
+.meter{height:8px;background:rgba(255,255,255,.18);border-radius:9px;margin-bottom:14px;overflow:hidden}
+.meter i{display:block;height:100%;background:#7ee0a5;transition:width .3s}
+.flip{min-height:230px;display:flex;flex-direction:column;justify-content:center;text-align:center;cursor:pointer;padding-top:40px}
+.flip .w{font:400 44px/1.1 var(--hand);word-break:break-word}
+.flip .hint{color:var(--soft);font-size:14px;margin-top:10px}
+.flip .m{font-size:20px;font-weight:700}
+.flip .e{color:var(--soft);font-style:italic;margin-top:8px}
+.rate{display:flex;gap:10px;margin-top:16px}.rate button{flex:1;padding:14px}
+.search{margin-bottom:12px}
+.word{background:var(--card);border-radius:6px;padding:10px 14px;margin-bottom:8px;display:grid;grid-template-columns:1fr auto;gap:2px 10px;border-left:6px solid var(--c)}
+.word b{font:400 22px var(--hand)}
+.word .e{color:var(--soft);font-style:italic;font-size:14px}
+.word .r{grid-row:1/4;grid-column:2;text-align:right;font-size:13px;color:var(--soft)}
+.word .r button{background:none;color:var(--soft);padding:2px 0;text-decoration:underline;font-weight:400;font-size:13px}
+.empty{color:#dbe5f2;text-align:center;padding:24px 10px}
+.empty button{background:#fff;color:#26303b;margin-top:10px}
+@media (prefers-reduced-motion:no-preference){.flip{animation:t .28s}@keyframes t{from{transform:rotateX(70deg);opacity:.4}}}
+</style>
+</head>
+<body>
+<div id="root"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<script>
+const { useState, useEffect } = React;
+const html = htm.bind(React.createElement);
+
+const STARTER = [
+  ["happy","Feeling joy","I am happy today."],
+  ["big","Large in size","An elephant is big."],
+  ["small","Little in size","An ant is small."],
+  ["fast","Moving quickly","A cheetah is fast."],
+  ["slow","Not fast","The turtle is slow."],
+  ["brave","Not afraid","The brave boy saved the cat."],
+  ["kind","Friendly and caring","She is kind to everyone."],
+  ["angry","Very upset","Dad was angry about the mess."],
+  ["quiet","Making little or no sound","Please be quiet in the library."],
+  ["clean","Not dirty","Keep your room clean."]
+];
+const LEVELS = ["New", "Learning", "Good", "Mastered"];
+const COLORS = ["#d9534f", "#e0a030", "#7fb34f", "#2f8f5b"];
+
+function loadWords() {
+  try { return JSON.parse(localStorage.getItem("word-cards-react") || "[]"); } catch (e) { return []; }
+}
+function saveWords(w) {
+  try { localStorage.setItem("word-cards-react", JSON.stringify(w)); } catch (e) {}
+}
+const makeStarter = () => STARTER.map(([w, d, e]) => ({ id: "s-" + w, w, d, e, box: 0 }));
+
+function pickWord(words, currentId) {
+  const pool = words.filter(x => x.id !== currentId);
+  const list = pool.length ? pool : words;
+  const weights = list.map(x => [8, 4, 2, 1][x.box]);
+  let r = Math.random() * weights.reduce((a, b) => a + b, 0);
+  for (let i = 0; i < list.length; i++) { r -= weights[i]; if (r <= 0) return list[i].id; }
+  return list[0].id;
+}
+
+function Nav({ route }) {
+  const items = [["practice", "Practice"], ["words", "Words"], ["add", "Add"]];
+  return html`<nav aria-label="Main">
+    ${items.map(([id, label]) => html`<a key=${id} href=${"#/" + id} aria-current=${route === id ? "page" : undefined}>${label}</a>`)}
+  </nav>`;
+}
+
+function StarterButton({ onClick }) {
+  return html`<button onClick=${onClick}>Add 10 simple words</button>`;
+}
+
+function Add({ words, setWords }) {
+  const [w, setW] = useState("");
+  const [d, setD] = useState("");
+  const [e, setE] = useState("");
+  const [msg, setMsg] = useState("");
+
+  function submit(ev) {
+    ev.preventDefault();
+    const word = w.trim();
+    if (words.some(x => x.w.toLowerCase() === word.toLowerCase())) { setMsg("Already saved."); return; }
+    setWords([...words, { id: String(Date.now()), w: word, d: d.trim(), e: e.trim(), box: 0 }]);
+    setW(""); setD(""); setE("");
+    setMsg('Saved "' + word + '". Add another or go to Practice.');
+  }
+
+  return html`<form className="card" onSubmit=${submit}>
+    <h2>New word</h2>
+    <label htmlFor="w">Word</label>
+    <input id="w" required maxLength="40" autoComplete="off" value=${w} onChange=${ev => setW(ev.target.value)} />
+    <label htmlFor="d">Meaning</label>
+    <input id="d" required maxLength="140" autoComplete="off" value=${d} onChange=${ev => setD(ev.target.value)} />
+    <label htmlFor="e">Example sentence (optional)</label>
+    <textarea id="e" maxLength="200" value=${e} onChange=${ev => setE(ev.target.value)}></textarea>
+    <div className="acts">
+      <button type="submit">Save card</button>
+      <span className="msg" role="status">${msg}</span>
+    </div>
+  </form>`;
+}
+
+function WordList({ words, setWords, addStarter }) {
+  const [q, setQ] = useState("");
+  if (!words.length) {
+    return html`<div className="empty">No cards yet.<br /><${StarterButton} onClick=${addStarter} /></div>`;
+  }
+  const shown = words
+    .filter(x => (x.w + x.d).toLowerCase().includes(q.toLowerCase()))
+    .sort((a, b) => a.w.localeCompare(b.w));
+
+  return html`<div>
+    <input className="search" placeholder="Search words" aria-label="Search words" value=${q} onChange=${ev => setQ(ev.target.value)} />
+    ${shown.length === 0 && html`<div className="empty">No match for that search.</div>`}
+    ${shown.map(x => html`<div className="word" key=${x.id} style=${{ "--c": COLORS[x.box] }}>
+      <b>${x.w}</b>
+      <span>${x.d}</span>
+      ${x.e && html`<span className="e">${x.e}</span>`}
+      <span className="r">${LEVELS[x.box]}<br />
+        <button onClick=${() => setWords(words.filter(y => y.id !== x.id))}>delete</button>
+      </span>
+    </div>`)}
+  </div>`;
+}
+
+function Practice({ words, setWords, addStarter }) {
+  const [curId, setCurId] = useState(null);
+  const [shown, setShown] = useState(false);
+  const [session, setSession] = useState({ seen: 0, known: 0 });
+
+  useEffect(() => {
+    if (words.length && !words.some(x => x.id === curId)) setCurId(pickWord(words, curId));
+  }, [words, curId]);
+
+  if (!words.length) {
+    return html`<div className="empty">Add some words first, then come back to practise.<br /><${StarterButton} onClick=${addStarter} /></div>`;
+  }
+  const cur = words.find(x => x.id === curId);
+  if (!cur) return null;
+
+  const mastered = words.filter(x => x.box === 3).length;
+
+  function rate(ok) {
+    const updated = words.map(x => x.id === cur.id ? { ...x, box: ok ? Math.min(3, x.box + 1) : 0 } : x);
+    setWords(updated);
+    setSession({ seen: session.seen + 1, known: session.known + (ok ? 1 : 0) });
+    setCurId(pickWord(updated, cur.id));
+    setShown(false);
+  }
+
+  return html`<div>
+    <div className="stats">
+      <span>${mastered} of ${words.length} mastered</span>
+      <span>This session: ${session.known}/${session.seen}</span>
+    </div>
+    <div className="meter"><i style=${{ width: (mastered / words.length * 100) + "%" }}></i></div>
+
+    <div className="card flip" key=${cur.id + shown} role="button" tabIndex="0" aria-label="Flip card"
+         onClick=${() => setShown(true)}
+         onKeyDown=${ev => { if ((ev.key === "Enter" || ev.key === " ") && !shown) { ev.preventDefault(); setShown(true); } }}>
+      ${shown
+        ? html`<div><div className="m">${cur.d}</div>${cur.e && html`<div className="e">${cur.e}</div>`}</div>`
+        : html`<div><div className="w">${cur.w}</div><div className="hint">Say the meaning, then tap to check</div></div>`}
+    </div>
+
+    <div className="rate">
+      ${shown
+        ? html`<button className="no" onClick=${() => rate(false)}>Again</button>
+               <button className="ok" onClick=${() => rate(true)}>Got it</button>`
+        : html`<button className="white" onClick=${() => setShown(true)}>Show meaning</button>`}
+    </div>
+  </div>`;
+}
+
+function App() {
+  const [words, setWordsState] = useState(loadWords);
+  const [route, setRoute] = useState(() => location.hash.replace("#/", "") || "practice");
+
+  useEffect(() => {
+    const onHash = () => setRoute(location.hash.replace("#/", "") || "practice");
+    addEventListener("hashchange", onHash);
+    return () => removeEventListener("hashchange", onHash);
+  }, []);
+
+  function setWords(w) { setWordsState(w); saveWords(w); }
+  function addStarter() {
+    const extra = makeStarter().filter(s => !words.some(x => x.w === s.w));
+    setWords([...words, ...extra]);
+  }
+
+  const page = ["practice", "words", "add"].includes(route) ? route : "practice";
+  return html`<div className="app">
+    <div className="top"><h1>Word Cards</h1><${Nav} route=${page} /></div>
+    <main>
+      ${page === "practice" && html`<${Practice} words=${words} setWords=${setWords} addStarter=${addStarter} />`}
+      ${page === "words" && html`<${WordList} words=${words} setWords=${setWords} addStarter=${addStarter} />`}
+      ${page === "add" && html`<${Add} words=${words} setWords=${setWords} />`}
+    </main>
+  </div>`;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(html`<${App} />`);
+</script>
+</body>
+</html>
